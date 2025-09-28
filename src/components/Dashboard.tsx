@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Calendar, Wheat, Package, QrCode, ScanLine, Truck, Store, User, ShoppingCart, Brain } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard as Edit, Trash2, Calendar, Wheat, Package, QrCode, ScanLine, Truck, Store, User, ShoppingCart, Brain } from 'lucide-react';
 import { Crop } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { storage } from '../lib/storage';
@@ -10,7 +10,6 @@ import QRCodeModal from './QRCodeModal';
 import QRScannerModal from './QRScannerModal';
 import AIAnalysis from './AIAnalysis';
 import AIInsights from './AIInsights';
-import AIWeatherIntegration from './AIWeatherIntegration';
 
 const Dashboard: React.FC = () => {
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -258,9 +257,6 @@ const Dashboard: React.FC = () => {
 
       {/* AI Insights */}
       <AIInsights />
-
-      {/* AI Weather Integration */}
-      <AIWeatherIntegration />
 
       {/* Search and Filter */}
       <div className="bg-white rounded-xl shadow-lg border border-orange-200 p-6">
