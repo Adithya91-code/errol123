@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Calendar, Wheat, Package, QrCode, ScanLine, Truck, Store, User, ShoppingCart } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Calendar, Wheat, Package, QrCode, ScanLine, Truck, Store, User, ShoppingCart, Brain } from 'lucide-react';
 import { Crop } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { storage } from '../lib/storage';
@@ -8,6 +8,9 @@ import SupplyChainForm from './SupplyChainForm';
 import FarmerCropSelector from './FarmerCropSelector';
 import QRCodeModal from './QRCodeModal';
 import QRScannerModal from './QRScannerModal';
+import AIAnalysis from './AIAnalysis';
+import AIInsights from './AIInsights';
+import AIWeatherIntegration from './AIWeatherIntegration';
 
 const Dashboard: React.FC = () => {
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -20,6 +23,7 @@ const Dashboard: React.FC = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [showSupplyChainForm, setShowSupplyChainForm] = useState<Crop | null>(null);
   const [showFarmerCropSelector, setShowFarmerCropSelector] = useState(false);
+  const [showAIAnalysis, setShowAIAnalysis] = useState<Crop | null>(null);
 
   const { user } = useAuth();
 
@@ -89,6 +93,10 @@ const Dashboard: React.FC = () => {
 
   const handleSupplyChainUpdate = (crop: Crop) => {
     setShowSupplyChainForm(crop);
+  };
+
+  const handleAIAnalysis = (crop: Crop) => {
+    setShowAIAnalysis(crop);
   };
 
   const handleScanResult = (cropId: string) => {
@@ -169,6 +177,13 @@ const Dashboard: React.FC = () => {
               <ScanLine className="h-4 w-4" />
               <span>Scan QR</span>
             </button>
+            <button
+              onClick={() => setShowAIAnalysis(null)}
+              className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              <Brain className="h-4 w-4" />
+              <span>AI Analysis</span>
+            </button>
             {user?.role === 'distributor' && (
               <button
                 onClick={() => setShowFarmerCropSelector(true)}
@@ -240,6 +255,12 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Insights */}
+      <AIInsights />
+
+      {/* AI Weather Integration */}
+      <AIWeatherIntegration />
 
       {/* Search and Filter */}
       <div className="bg-white rounded-xl shadow-lg border border-orange-200 p-6">
@@ -317,6 +338,13 @@ const Dashboard: React.FC = () => {
                       title="Generate QR Code"
                     >
                       <QrCode className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleAIAnalysis(crop)}
+                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="AI Analysis"
+                    >
+                      <Brain className="h-4 w-4" />
                     </button>
                     {(user?.role === 'distributor' || user?.role === 'retailer') && (
                       <button
@@ -439,6 +467,14 @@ const Dashboard: React.FC = () => {
           userRole={user?.role || 'farmer'}
           onClose={() => setShowFarmerCropSelector(false)}
           onSave={loadCrops}
+        />
+      )}
+
+      {/* AI Analysis Modal */}
+      {showAIAnalysis !== undefined && (
+        <AIAnalysis
+          crop={showAIAnalysis}
+          onClose={() => setShowAIAnalysis(undefined)}
         />
       )}
     </div>
