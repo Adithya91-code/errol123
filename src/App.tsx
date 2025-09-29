@@ -36,9 +36,15 @@ const AppRoutes: React.FC = () => {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
+            {user?.role === 'admin' ? (
+              <Layout>
+                <Dashboard />
+              </Layout>
+            ) : (
+              <Layout>
+                <Dashboard />
+              </Layout>
+            )}
           </ProtectedRoute>
         }
       />
