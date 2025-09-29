@@ -117,10 +117,7 @@ class JSONStorage {
   }
 
   // Crop methods
-  getCrops(userId: string | 'all') {
-    if (userId === 'all') {
-      return this.data.crops;
-    }
+  getCrops(userId: string) {
     return this.data.crops.filter(crop => crop.user_id === userId);
   }
 

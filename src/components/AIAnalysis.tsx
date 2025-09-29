@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Brain, Upload, Loader, CheckCircle, AlertTriangle } from 'lucide-react';
+import { X, Brain, Camera, Upload, Loader, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import { Crop } from '../types';
 
 interface AIAnalysisProps {
@@ -8,21 +8,31 @@ interface AIAnalysisProps {
 }
 
 interface AnalysisResult {
-  overallCondition: 'Excellent' | 'Good' | 'Fair' | 'Poor';
-  freshness: number;
-  ripeness: number;
-  shelfLife: number;
-  confidence: number;
-  detectedIssues: string[];
+  healthScore: number;
+  diseaseDetection: {
+    detected: boolean;
+    diseases: string[];
+    confidence: number;
+  };
   recommendations: string[];
+  marketPrediction: {
+    expectedPrice: number;
+    demandLevel: 'Low' | 'Medium' | 'High';
+    bestHarvestTime: string;
+  };
+  environmentalFactors: {
+    soilHealth: number;
+    weatherImpact: string;
+    pestRisk: 'Low' | 'Medium' | 'High';
+  };
 }
 
 const AIAnalysis: React.FC<AIAnalysisProps> = ({ crop, onClose }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>(crop?.image_url || '');
+  const [imagePreview, setImagePreview] = useState<string>('');
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [cropType, setCropType] = useState(crop?.crop_type || 'Apple');
+  const [analysisType, setAnalysisType] = useState<'disease' | 'health' | 'market'>('disease');
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,44 +46,63 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ crop, onClose }) => {
     }
   };
 
-  const analyzeCondition = async () => {
-    if (!imagePreview) return;
-    
+  const simulateAIAnalysis = async () => {
     setAnalyzing(true);
     
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Simulate AI processing time
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Generate realistic analysis results
-    const conditions: AnalysisResult['overallCondition'][] = ['Excellent', 'Good', 'Fair', 'Poor'];
-    const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
-    
+    // Generate mock AI analysis results
     const mockResult: AnalysisResult = {
-      overallCondition: randomCondition,
-      freshness: Math.floor(Math.random() * 30) + 70, // 70-100%
-      ripeness: Math.floor(Math.random() * 30) + 70, // 70-100%
-      shelfLife: Math.floor(Math.random() * 10) + 3, // 3-12 days
-      confidence: Math.floor(Math.random() * 20) + 80, // 80-100%
-      detectedIssues: randomCondition === 'Poor' ? ['Minor blemishes', 'Slight discoloration'] : 
-                     randomCondition === 'Fair' ? ['Very minor blemishes'] : [],
+      healthScore: Math.floor(Math.random() * 30) + 70, // 70-100
+      diseaseDetection: {
+        detected: Math.random() > 0.7,
+        diseases: Math.random() > 0.7 ? ['Leaf Blight', 'Powdery Mildew'] : [],
+        confidence: Math.floor(Math.random() * 20) + 80 // 80-100
+      },
       recommendations: [
-        'Good for immediate sale or processing',
-        'Monitor closely for deterioration',
-        'Consider 10-15% price reduction',
-        'Best used within 2-3 days'
-      ]
+        'Increase watering frequency by 20%',
+        'Apply organic fertilizer rich in nitrogen',
+        'Monitor for pest activity in the next 7 days',
+        'Consider companion planting with marigolds',
+        'Harvest within 2-3 weeks for optimal quality'
+      ],
+      marketPrediction: {
+        expectedPrice: Math.floor(Math.random() * 50) + 25, // $25-75 per kg
+        demandLevel: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)] as 'Low' | 'Medium' | 'High',
+        bestHarvestTime: 'Next 2-3 weeks'
+      },
+      environmentalFactors: {
+        soilHealth: Math.floor(Math.random() * 30) + 70, // 70-100
+        weatherImpact: 'Favorable conditions expected',
+        pestRisk: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)] as 'Low' | 'Medium' | 'High'
+      }
     };
     
     setAnalysisResult(mockResult);
     setAnalyzing(false);
   };
 
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case 'Excellent': return 'text-green-600 bg-green-100';
-      case 'Good': return 'text-blue-600 bg-blue-100';
-      case 'Fair': return 'text-yellow-600 bg-yellow-100';
-      case 'Poor': return 'text-red-600 bg-red-100';
+  const getHealthScoreColor = (score: number) => {
+    if (score >= 90) return 'text-green-600';
+    if (score >= 70) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getDemandLevelColor = (level: string) => {
+    switch (level) {
+      case 'High': return 'text-green-600 bg-green-100';
+      case 'Medium': return 'text-yellow-600 bg-yellow-100';
+      case 'Low': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getRiskLevelColor = (risk: string) => {
+    switch (risk) {
+      case 'Low': return 'text-green-600 bg-green-100';
+      case 'Medium': return 'text-yellow-600 bg-yellow-100';
+      case 'High': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -84,7 +113,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ crop, onClose }) => {
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div className="flex items-center space-x-2">
             <Brain className="h-6 w-6 text-purple-600" />
-            <h2 className="text-2xl font-bold text-gray-800">AI Crop Condition Analysis</h2>
+            <h2 className="text-2xl font-bold text-gray-800">AI Crop Analysis</h2>
           </div>
           <button
             onClick={onClose}
@@ -95,165 +124,242 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ crop, onClose }) => {
         </div>
 
         <div className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Side - Upload and Controls */}
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Upload className="inline h-4 w-4 mr-1" />
-                  Upload Crop Image
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  {imagePreview ? (
-                    <div className="space-y-4">
-                      <img
-                        src={imagePreview}
-                        alt="Crop for analysis"
-                        className="w-full h-64 object-cover rounded-lg mx-auto"
-                      />
-                      <button
-                        onClick={() => {
-                          setSelectedImage(null);
-                          setImagePreview('');
-                          setAnalysisResult(null);
-                        }}
-                        className="text-sm text-purple-600 hover:text-purple-700"
-                      >
-                        Change Image
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <Upload className="h-12 w-12 text-gray-400 mx-auto" />
-                      <div>
-                        <label className="cursor-pointer">
-                          <span className="text-purple-600 hover:text-purple-700 font-medium">
-                            Click to upload
-                          </span>
-                          <span className="text-gray-600"> or drag and drop</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                    </div>
-                  )}
-                </div>
+          {crop && (
+            <div className="mb-6 p-4 bg-orange-50 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-2">Analyzing Crop: {crop.name}</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                <p><strong>Type:</strong> {crop.crop_type}</p>
+                <p><strong>Soil:</strong> {crop.soil_type}</p>
+                <p><strong>Harvest Date:</strong> {new Date(crop.harvest_date).toLocaleDateString()}</p>
+                <p><strong>Expiry Date:</strong> {new Date(crop.expiry_date).toLocaleDateString()}</p>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Crop Type
-                </label>
-                <select
-                  value={cropType}
-                  onChange={(e) => setCropType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="Apple">Apple</option>
-                  <option value="Banana">Banana</option>
-                  <option value="Orange">Orange</option>
-                  <option value="Tomato">Tomato</option>
-                  <option value="Potato">Potato</option>
-                  <option value="Carrot">Carrot</option>
-                  <option value="Lettuce">Lettuce</option>
-                  <option value="Corn">Corn</option>
-                </select>
-              </div>
-
-              <button
-                onClick={analyzeCondition}
-                disabled={analyzing || !imagePreview}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
-              >
-                {analyzing ? (
-                  <>
-                    <Loader className="h-5 w-5 animate-spin" />
-                    <span>Analyzing Condition...</span>
-                  </>
-                ) : (
-                  <>
-                    <Brain className="h-5 w-5" />
-                    <span>Analyze Condition</span>
-                  </>
-                )}
-              </button>
             </div>
+          )}
 
-            {/* Right Side - Analysis Results */}
-            <div className="space-y-6">
-              {analysisResult ? (
-                <>
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Analysis Results</h3>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Overall Condition</span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getConditionColor(analysisResult.overallCondition)}`}>
-                          {analysisResult.overallCondition}
-                        </span>
-                      </div>
+          {/* Analysis Type Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Select Analysis Type
+            </label>
+            <div className="flex space-x-4">
+              {[
+                { value: 'disease', label: 'Disease Detection', icon: AlertTriangle },
+                { value: 'health', label: 'Health Assessment', icon: CheckCircle },
+                { value: 'market', label: 'Market Analysis', icon: Info }
+              ].map(({ value, label, icon: Icon }) => (
+                <label
+                  key={value}
+                  className={`flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all ${
+                    analysisType === value
+                      ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500 ring-opacity-20'
+                      : 'border-gray-300 hover:border-purple-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    value={value}
+                    checked={analysisType === value}
+                    onChange={(e) => setAnalysisType(e.target.value as any)}
+                    className="text-purple-600 focus:ring-purple-500"
+                  />
+                  <Icon className="h-4 w-4 text-purple-600" />
+                  <span className="font-medium text-gray-800">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <span className="text-sm text-gray-600">Freshness</span>
-                          <div className="text-2xl font-bold text-green-600">{analysisResult.freshness}%</div>
-                        </div>
-                        <div>
-                          <span className="text-sm text-gray-600">Ripeness</span>
-                          <div className="text-2xl font-bold text-blue-600">{analysisResult.ripeness}%</div>
-                        </div>
-                        <div>
-                          <span className="text-sm text-gray-600">Shelf Life</span>
-                          <div className="text-2xl font-bold text-orange-600">{analysisResult.shelfLife} days</div>
-                        </div>
-                        <div>
-                          <span className="text-sm text-gray-600">Confidence</span>
-                          <div className="text-2xl font-bold text-purple-600">{analysisResult.confidence}%</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {analysisResult.detectedIssues.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-red-800 mb-2 flex items-center space-x-2">
-                        <AlertTriangle className="h-5 w-5" />
-                        <span>Detected Issues</span>
-                      </h4>
-                      <ul className="space-y-1">
-                        {analysisResult.detectedIssues.map((issue, index) => (
-                          <li key={index} className="text-red-700 text-sm">• {issue}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-800 mb-3">Recommendations</h4>
-                    <ul className="space-y-2">
-                      {analysisResult.recommendations.map((recommendation, index) => (
-                        <li key={index} className="flex items-start space-x-2">
-                          <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                          <span className="text-blue-700 text-sm">{recommendation}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </>
+          {/* Image Upload */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload Crop Image for Analysis
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              {imagePreview ? (
+                <div className="space-y-4">
+                  <img
+                    src={imagePreview}
+                    alt="Crop for analysis"
+                    className="w-full h-48 object-cover rounded-lg mx-auto"
+                  />
+                  <button
+                    onClick={() => {
+                      setSelectedImage(null);
+                      setImagePreview('');
+                    }}
+                    className="text-sm text-red-600 hover:text-red-700"
+                  >
+                    Remove Image
+                  </button>
+                </div>
               ) : (
-                <div className="bg-gray-50 rounded-lg p-12 text-center">
-                  <Brain className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Ready for Analysis</h3>
-                  <p className="text-gray-500">Upload an image and click "Analyze Condition" to get AI-powered insights about your crop.</p>
+                <div className="space-y-4">
+                  <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                  <div>
+                    <label className="cursor-pointer">
+                      <span className="text-purple-600 hover:text-purple-700 font-medium">
+                        Click to upload
+                      </span>
+                      <span className="text-gray-600"> or drag and drop</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Analyze Button */}
+          <div className="mb-6">
+            <button
+              onClick={simulateAIAnalysis}
+              disabled={analyzing || (!selectedImage && !crop?.image_url)}
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+            >
+              {analyzing ? (
+                <>
+                  <Loader className="h-5 w-5 animate-spin" />
+                  <span>Analyzing with AI...</span>
+                </>
+              ) : (
+                <>
+                  <Brain className="h-5 w-5" />
+                  <span>Start AI Analysis</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Analysis Results */}
+          {analysisResult && (
+            <div className="space-y-6">
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span>Analysis Complete</span>
+                </h3>
+
+                {/* Health Score */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-700 mb-2">Health Score</h4>
+                    <div className={`text-3xl font-bold ${getHealthScoreColor(analysisResult.healthScore)}`}>
+                      {analysisResult.healthScore}%
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div
+                        className={`h-2 rounded-full ${
+                          analysisResult.healthScore >= 90 ? 'bg-green-500' :
+                          analysisResult.healthScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${analysisResult.healthScore}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-700 mb-2">Soil Health</h4>
+                    <div className={`text-3xl font-bold ${getHealthScoreColor(analysisResult.environmentalFactors.soilHealth)}`}>
+                      {analysisResult.environmentalFactors.soilHealth}%
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{analysisResult.environmentalFactors.weatherImpact}</p>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-700 mb-2">Market Demand</h4>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getDemandLevelColor(analysisResult.marketPrediction.demandLevel)}`}>
+                      {analysisResult.marketPrediction.demandLevel}
+                    </span>
+                    <p className="text-lg font-bold text-gray-800 mt-2">
+                      ${analysisResult.marketPrediction.expectedPrice}/kg
+                    </p>
+                  </div>
+                </div>
+
+                {/* Disease Detection */}
+                {analysisResult.diseaseDetection.detected && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-semibold text-red-800 mb-2 flex items-center space-x-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      <span>Disease Detection Alert</span>
+                    </h4>
+                    <div className="space-y-2">
+                      {analysisResult.diseaseDetection.diseases.map((disease, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-red-700 font-medium">{disease}</span>
+                          <span className="text-sm text-red-600">
+                            {analysisResult.diseaseDetection.confidence}% confidence
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-blue-800 mb-3">AI Recommendations</h4>
+                  <ul className="space-y-2">
+                    {analysisResult.recommendations.map((recommendation, index) => (
+                      <li key={index} className="flex items-start space-x-2">
+                        <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-blue-700">{recommendation}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Environmental Factors */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-green-800 mb-3">Environmental Assessment</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-green-700 mb-1">Pest Risk Level</p>
+                      <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${getRiskLevelColor(analysisResult.environmentalFactors.pestRisk)}`}>
+                        {analysisResult.environmentalFactors.pestRisk}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-700 mb-1">Best Harvest Time</p>
+                      <p className="font-medium text-green-800">{analysisResult.marketPrediction.bestHarvestTime}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+            {analysisResult && (
+              <button
+                onClick={() => {
+                  const analysisData = JSON.stringify(analysisResult, null, 2);
+                  const blob = new Blob([analysisData], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `ai-analysis-${crop?.name || 'crop'}-${new Date().toISOString().split('T')[0]}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              >
+                Export Report
+              </button>
+            )}
           </div>
         </div>
       </div>
