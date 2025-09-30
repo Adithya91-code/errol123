@@ -1,0 +1,10 @@
+com\farmchainx\repository\UserRepository.class
+com\farmchainx\security\AuthTokenFilter.class
+com\farmchainx\security\AuthEntryPointJwt.class
+com\farmchainx\security\JwtUtils.class
+com\farmchainx\service\UserDetailsServiceImpl.class
+com\farmchainx\model\User.class
+com\farmchainx\dto\SignupRequest.class
+com\farmchainx\config\WebSecurityConfig.class
+com\farmchainx\dto\AuthResponse.class
+com\farmchainx\model\UserRole.class
