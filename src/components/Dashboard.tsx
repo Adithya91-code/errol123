@@ -37,17 +37,8 @@ const Dashboard: React.FC = () => {
   const loadCrops = () => {
     if (!user) return;
 
-    let userCrops;
-    if (user.role === 'distributor') {
-      // Show crops that distributor has received from farmers
-      userCrops = storage.getCrops(user.id);
-    } else if (user.role === 'retailer') {
-      // Show crops that retailer has received from distributors
-      userCrops = storage.getCrops(user.id);
-    } else {
-      // For farmers and others, show their own crops
-      userCrops = storage.getCrops(user.id);
-    }
+    // All users see their own crops
+    const userCrops = storage.getCrops(user.id);
     setCrops(userCrops);
     setLoading(false);
   };
@@ -212,13 +203,13 @@ const Dashboard: React.FC = () => {
                 <span>Add Crops from Distributor</span>
               </button>
             )}
-            {user?.role === 'farmer' && (
+            {(user?.role === 'farmer' || user?.role === 'distributor' || user?.role === 'retailer') && (
               <button
                 onClick={() => setShowForm(true)}
                 className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 <Plus className="h-4 w-4" />
-                <span>Add New Crop</span>
+                <span>{user.role === 'farmer' ? 'Add New Crop' : 'Add Crop'}</span>
               </button>
             )}
           </div>
@@ -312,7 +303,7 @@ const Dashboard: React.FC = () => {
               onClick={() => setShowForm(true)}
               className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg transition-colors"
             >
-              Add Your First Crop
+              {user?.role === 'farmer' ? 'Add Your First Crop' : 'Add Crop'}
             </button>
           )}
         </div>
@@ -359,7 +350,7 @@ const Dashboard: React.FC = () => {
                         {user.role === 'distributor' ? <Truck className="h-4 w-4" /> : <Store className="h-4 w-4" />}
                       </button>
                     )}
-                    {user?.role === 'farmer' && crop.user_id === user.id && (
+                    {crop.user_id === user.id && (
                       <>
                         <button
                           onClick={() => handleEdit(crop)}

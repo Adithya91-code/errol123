@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, Calendar, Wheat, Beaker, Image as ImageIcon } from 'lucide-react';
 import { Crop } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 interface CropFormProps {
   crop?: Crop | null;
@@ -9,6 +10,7 @@ interface CropFormProps {
 }
 
 const CropForm: React.FC<CropFormProps> = ({ crop, onClose, onSave }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: crop?.name || '',
     crop_type: crop?.crop_type || '',
@@ -96,7 +98,7 @@ const CropForm: React.FC<CropFormProps> = ({ crop, onClose, onSave }) => {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800">
-            {crop ? 'Edit Crop' : 'Add New Crop'}
+            {crop ? 'Edit Crop' : `Add New Crop${user?.role !== 'farmer' ? ` (${user?.role})` : ''}`}
           </h2>
           <button
             onClick={onClose}

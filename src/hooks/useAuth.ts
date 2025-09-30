@@ -34,44 +34,60 @@ export const useAuthProvider = () => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const result = await apiService.signIn(email, password);
+    // For local storage implementation
+    const foundUser = storage.findUser(email, password);
     
-    if (result.error) {
-      throw new Error(result.error);
+    if (!foundUser) {
+      throw new Error('Invalid email or password');
     }
 
-    if (result.data) {
-      const userSession: User = {
-        id: result.data.id.toString(),
-        email: result.data.email,
-        role: result.data.role.toLowerCase(),
-        created_at: new Date().toISOString(),
-        farmer_id: result.data.farmerId,
-        distributor_id: result.data.distributorId,
-        name: result.data.name,
-        location: result.data.location
-      }
+    const userSession: User = {
+      id: foundUser.id,
+      email: foundUser.email,
+      role: foundUser.role as UserRole,
+      created_at: foundUser.created_at,
+      farmer_id: foundUser.farmer_id,
+      distributor_id: foundUser.distributor_id,
+      name: foundUser.name,
+      location: foundUser.location
+    };
 
-      setUser(userSession);
-      localStorage.setItem('current_user', JSON.stringify(userSession));
-    }
+    setUser(userSession);
+    localStorage.setItem('current_user', JSON.stringify(userSession));
   };
 
   const signUp = async (email: string, password: string, role: UserRole, name: string, location: string) => {
-    const result = await apiService.signUp({
-      email,
-      password,
-      name,
-      location,
-      role
-    });
-    
-    if (result.error) {
-      throw new Error(result.error);
+    // For local storage implementation, create user directly
+    if (storage.userExists(email)) {
+      throw new Error('User with this email already exists');
     }
 
-    // After successful signup, sign in the user
-    await signIn(email, password);
+    const newUser = {
+      id: Math.random().toString(36).substr(2, 9),
+      email,
+      password, // In production, this should be hashed
+      name,
+      location,
+      role,
+      created_at: new Date().toISOString()
+    };
+
+    const createdUser = storage.addUser(newUser);
+    
+    // Set current user
+    const userSession: User = {
+      id: createdUser.id,
+      email: createdUser.email,
+      role: createdUser.role as UserRole,
+      created_at: createdUser.created_at,
+      farmer_id: createdUser.farmer_id,
+      distributor_id: createdUser.distributor_id,
+      name: createdUser.name,
+      location: createdUser.location
+    };
+
+    setUser(userSession);
+    localStorage.setItem('current_user', JSON.stringify(userSession));
   };
 
   const signOut = async () => {

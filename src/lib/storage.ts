@@ -89,8 +89,16 @@ class JSONStorage {
   }
 
   addUser(user: any) {
+    // Generate farmer_id for farmers and distributor_id for distributors
+    if (user.role.toLowerCase() === 'farmer' && !user.farmer_id) {
+      user.farmer_id = this.generateFarmerId();
+    }
+    if (user.role.toLowerCase() === 'distributor' && !user.distributor_id) {
+      user.distributor_id = this.generateDistributorId();
+    }
     this.data.users.push(user);
     this.saveData();
+    return user;
   }
 
   findUser(email: string, password: string) {
@@ -172,7 +180,7 @@ class JSONStorage {
     let farmerId;
     do {
       farmerId = Math.floor(100 + Math.random() * 900).toString(); // 3-digit number
-    } while (this.data.users.some(u => u.farmer_id === farmerId));
+    } while (this.data.users.some(u => u.farmer_id === farmerId && u.role.toLowerCase() === 'farmer'));
     return farmerId;
   }
 
@@ -180,16 +188,16 @@ class JSONStorage {
     let distributorId;
     do {
       distributorId = Math.floor(100 + Math.random() * 900).toString(); // 3-digit number
-    } while (this.data.users.some(u => u.distributor_id === distributorId));
+    } while (this.data.users.some(u => u.distributor_id === distributorId && u.role.toLowerCase() === 'distributor'));
     return distributorId;
   }
 
   getFarmerByFarmerId(farmerId: string) {
-    return this.data.users.find(u => u.farmer_id === farmerId && u.role === 'farmer');
+    return this.data.users.find(u => u.farmer_id === farmerId && u.role.toLowerCase() === 'farmer');
   }
 
   getDistributorByDistributorId(distributorId: string) {
-    return this.data.users.find(u => u.distributor_id === distributorId && u.role === 'distributor');
+    return this.data.users.find(u => u.distributor_id === distributorId && u.role.toLowerCase() === 'distributor');
   }
 
   getCropsByFarmerId(farmerId: string) {
@@ -206,7 +214,7 @@ class JSONStorage {
     if (!distributor) return [];
     return this.data.crops.filter(crop => 
       crop.user_id === distributor.id || 
-      (crop.distributor_info && crop.distributor_info.distributor_id === distributorId)
+      (crop.distributor_info && crop.distributor_info.name === distributor.name)
     );
   }
 

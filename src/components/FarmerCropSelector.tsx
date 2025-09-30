@@ -31,27 +31,40 @@ const FarmerCropSelector: React.FC<FarmerCropSelectorProps> = ({ userRole, onClo
       return;
     }
 
+    setError('');
+    setSupplierCrops([]);
+    setSupplierInfo(null);
+
     let supplier;
     let crops;
 
     if (isDistributor) {
       supplier = storage.getFarmerByFarmerId(supplierId);
+      console.log('Looking for farmer with ID:', supplierId);
+      console.log('Found farmer:', supplier);
       crops = supplier ? storage.getCropsByFarmerId(supplierId) : [];
+      console.log('Found crops:', crops);
     } else {
       supplier = storage.getDistributorByDistributorId(supplierId);
+      console.log('Looking for distributor with ID:', supplierId);
+      console.log('Found distributor:', supplier);
       crops = supplier ? storage.getCropsByDistributorId(supplierId) : [];
+      console.log('Found crops:', crops);
     }
 
     if (!supplier) {
       setError(`${supplierLabel} not found with this ID`);
-      setSupplierCrops([]);
-      setSupplierInfo(null);
+      return;
+    }
+
+    if (crops.length === 0) {
+      setError(`${supplierLabel} found but has no crops available`);
+      setSupplierInfo(supplier);
       return;
     }
 
     setSupplierCrops(crops);
     setSupplierInfo(supplier);
-    setError('');
     setSelectedCrops([]);
   };
 
