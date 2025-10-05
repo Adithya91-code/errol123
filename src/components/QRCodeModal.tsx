@@ -67,9 +67,33 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ crop, onClose }) => {
               <p><strong>Type:</strong> {crop.crop_type}</p>
               <p><strong>Harvest Date:</strong> {new Date(crop.harvest_date).toLocaleDateString()}</p>
               <p><strong>Expiry Date:</strong> {new Date(crop.expiry_date).toLocaleDateString()}</p>
-              <p><strong>Expiry Date:</strong> {new Date(crop.expiry_date).toLocaleDateString()}</p>
               <p><strong>Soil Type:</strong> {crop.soil_type}</p>
               <p><strong>Pesticides:</strong> {crop.pesticides_used || 'None'}</p>
+
+              {crop.farmer_info && (
+                <>
+                  <p className="mt-3 font-semibold text-green-600">Farmer Info:</p>
+                  <p><strong>Name:</strong> {crop.farmer_info.name}</p>
+                  <p><strong>Farmer ID:</strong> {crop.farmer_info.farmer_id}</p>
+                  <p><strong>Location:</strong> {crop.farmer_info.location || 'Not specified'}</p>
+                </>
+              )}
+
+              {crop.distributor_info && (
+                <>
+                  <p className="mt-3 font-semibold text-blue-600">Distributor Info:</p>
+                  <p><strong>Name:</strong> {crop.distributor_info.name}</p>
+                  <p><strong>Location:</strong> {crop.distributor_info.location || 'Not specified'}</p>
+                </>
+              )}
+
+              {crop.retailer_info && (
+                <>
+                  <p className="mt-3 font-semibold text-purple-600">Retailer Info:</p>
+                  <p><strong>Name:</strong> {crop.retailer_info.name}</p>
+                  <p><strong>Location:</strong> {crop.retailer_info.location || 'Not specified'}</p>
+                </>
+              )}
             </div>
           </div>
 

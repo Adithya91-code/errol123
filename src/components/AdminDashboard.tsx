@@ -3,6 +3,9 @@ import { Users, Package, TrendingUp, DollarSign, Activity, UserCheck, ShoppingCa
 import { useAuth } from '../hooks/useAuth';
 import { storage } from '../lib/storage';
 import { UserRole } from '../types';
+import UserManagementModal from './UserManagementModal';
+import ProductManagementModal from './ProductManagementModal';
+import AnalyticsModal from './AnalyticsModal';
 
 interface AdminStats {
   totalUsers: number;
@@ -29,6 +32,9 @@ const AdminDashboard: React.FC = () => {
     newProductsMonth: 0
   });
   const [loading, setLoading] = useState(true);
+  const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showProductManagement, setShowProductManagement] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -109,11 +115,17 @@ const AdminDashboard: React.FC = () => {
             <BarChart3 className="h-4 w-4" />
             <span>Overview</span>
           </button>
-          <button className="px-6 py-3 text-gray-600 hover:text-teal-600 font-semibold flex items-center space-x-2">
+          <button
+            onClick={() => setShowProductManagement(true)}
+            className="px-6 py-3 text-gray-600 hover:text-teal-600 font-semibold flex items-center space-x-2 transition-colors"
+          >
             <Package className="h-4 w-4" />
             <span>Products</span>
           </button>
-          <button className="px-6 py-3 text-gray-600 hover:text-teal-600 font-semibold flex items-center space-x-2">
+          <button
+            onClick={() => setShowAnalytics(true)}
+            className="px-6 py-3 text-gray-600 hover:text-teal-600 font-semibold flex items-center space-x-2 transition-colors"
+          >
             <TrendingUp className="h-4 w-4" />
             <span>Analytics</span>
           </button>
@@ -197,7 +209,10 @@ const AdminDashboard: React.FC = () => {
               <p className="text-sm text-gray-600">Manage all users</p>
             </div>
           </div>
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+          <button
+            onClick={() => setShowUserManagement(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+          >
             View All Users
           </button>
         </div>
@@ -212,7 +227,10 @@ const AdminDashboard: React.FC = () => {
               <p className="text-sm text-gray-600">Manage all crops</p>
             </div>
           </div>
-          <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">
+          <button
+            onClick={() => setShowProductManagement(true)}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
+          >
             View All Products
           </button>
         </div>
@@ -227,11 +245,27 @@ const AdminDashboard: React.FC = () => {
               <p className="text-sm text-gray-600">View detailed reports</p>
             </div>
           </div>
-          <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors">
+          <button
+            onClick={() => setShowAnalytics(true)}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors"
+          >
             View Analytics
           </button>
         </div>
       </div>
+
+      {/* Modals */}
+      {showUserManagement && (
+        <UserManagementModal onClose={() => setShowUserManagement(false)} />
+      )}
+
+      {showProductManagement && (
+        <ProductManagementModal onClose={() => setShowProductManagement(false)} />
+      )}
+
+      {showAnalytics && (
+        <AnalyticsModal onClose={() => setShowAnalytics(false)} />
+      )}
     </div>
   );
 };
