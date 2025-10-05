@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Users, Mail, UserCheck, Edit, Trash2, MapPin } from 'lucide-react';
+import { X, Users, Mail, UserCheck, CreditCard as Edit, Trash2, MapPin } from 'lucide-react';
 import { storage } from '../lib/storage';
 
 interface UserManagementModalProps {
