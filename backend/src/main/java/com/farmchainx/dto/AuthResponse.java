@@ -4,41 +4,33 @@ import com.farmchainx.model.UserRole;
 
 public class AuthResponse {
     private String token;
-    private String type = "Bearer";
     private Long id;
     private String email;
+    private UserRole role;
     private String name;
     private String location;
-    private UserRole role;
     private String farmerId;
     private String distributorId;
 
-    public AuthResponse(String accessToken, Long id, String email, String name, String location, UserRole role, String farmerId, String distributorId) {
-        this.token = accessToken;
+    public AuthResponse() {}
+
+    public AuthResponse(String token, Long id, String email, UserRole role, String name, String location, String farmerId, String distributorId) {
+        this.token = token;
         this.id = id;
         this.email = email;
+        this.role = role;
         this.name = name;
         this.location = location;
-        this.role = role;
         this.farmerId = farmerId;
         this.distributorId = distributorId;
     }
 
-    // Getters and Setters
     public String getToken() {
         return token;
     }
 
     public void setToken(String token) {
         this.token = token;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public Long getId() {
@@ -57,6 +49,14 @@ public class AuthResponse {
         this.email = email;
     }
 
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
     public String getName() {
         return name;
     }
@@ -71,14 +71,6 @@ public class AuthResponse {
 
     public void setLocation(String location) {
         this.location = location;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
     }
 
     public String getFarmerId() {
