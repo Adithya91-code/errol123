@@ -29,11 +29,24 @@ class ApiService {
     }
   }
 
-  // Authentication APIs
+  private getUserRole(): string {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      return user.role?.toLowerCase() || 'farmer';
+    }
+    return 'farmer';
+  }
+
+  private getCropEndpoint(): string {
+    const role = this.getUserRole();
+    return `${API_BASE_URL}/${role}/crops`;
+  }
+
   async signIn(email: string, password: string): Promise<ApiResponse<any>> {
     try {
-      console.log('Attempting backend signin for:', email);
-      const response = await fetch(`${API_BASE_URL}/auth/signin`, {
+      console.log('Attempting backend login for:', email);
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -42,11 +55,21 @@ class ApiService {
       const result = await this.handleResponse(response);
       if (result.data?.token) {
         localStorage.setItem('auth_token', result.data.token);
-        console.log('Backend signin successful, token stored');
+        const userData = {
+          id: result.data.id,
+          email: result.data.email,
+          role: result.data.role,
+          name: result.data.name,
+          location: result.data.location,
+          farmer_id: result.data.farmerId,
+          distributor_id: result.data.distributorId
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        console.log('Backend login successful, token and user stored');
       }
       return result;
     } catch (error) {
-      console.error('Backend signin failed:', error);
+      console.error('Backend login failed:', error);
       return { error: 'Network error occurred' };
     }
   }
@@ -59,8 +82,8 @@ class ApiService {
     role: string;
   }): Promise<ApiResponse<any>> {
     try {
-      console.log('Attempting backend signup for:', userData.email);
-      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+      console.log('Attempting backend registration for:', userData.email);
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -69,17 +92,33 @@ class ApiService {
         })
       });
 
-      return await this.handleResponse(response);
+      const result = await this.handleResponse(response);
+      if (result.data?.token) {
+        localStorage.setItem('auth_token', result.data.token);
+        const userDataStored = {
+          id: result.data.id,
+          email: result.data.email,
+          role: result.data.role,
+          name: result.data.name,
+          location: result.data.location,
+          farmer_id: result.data.farmerId,
+          distributor_id: result.data.distributorId
+        };
+        localStorage.setItem('user', JSON.stringify(userDataStored));
+        console.log('Backend registration successful');
+      }
+      return result;
     } catch (error) {
-      console.error('Backend signup failed:', error);
+      console.error('Backend registration failed:', error);
       return { error: 'Network error occurred' };
     }
   }
 
-  // Crop APIs
   async getCrops(): Promise<ApiResponse<any[]>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/crops`, {
+      const endpoint = this.getCropEndpoint();
+      console.log('Fetching crops from:', endpoint);
+      const response = await fetch(endpoint, {
         headers: this.getAuthHeaders()
       });
 
@@ -92,11 +131,24 @@ class ApiService {
 
   async createCrop(cropData: any): Promise<ApiResponse<any>> {
     try {
-      console.log('Creating crop with backend data:', cropData);
-      const response = await fetch(`${API_BASE_URL}/crops`, {
+      const endpoint = this.getCropEndpoint();
+      console.log('Creating crop at:', endpoint, 'with data:', cropData);
+
+      const backendData = {
+        name: cropData.name,
+        cropType: cropData.cropType,
+        harvestDate: cropData.harvestDate,
+        expiryDate: cropData.expiryDate,
+        soilType: cropData.soilType,
+        pesticidesUsed: cropData.pesticidesUsed || 'Not specified',
+        imageUrl: cropData.imageUrl || '',
+        farmerLocation: cropData.location || ''
+      };
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(cropData)
+        body: JSON.stringify(backendData)
       });
 
       const result = await this.handleResponse(response);
@@ -114,11 +166,24 @@ class ApiService {
 
   async updateCrop(cropId: string, cropData: any): Promise<ApiResponse<any>> {
     try {
-      console.log('Updating crop', cropId, 'with backend data:', cropData);
-      const response = await fetch(`${API_BASE_URL}/crops/${cropId}`, {
+      const endpoint = `${this.getCropEndpoint()}/${cropId}`;
+      console.log('Updating crop at:', endpoint, 'with data:', cropData);
+
+      const backendData = {
+        name: cropData.name,
+        cropType: cropData.cropType,
+        harvestDate: cropData.harvestDate,
+        expiryDate: cropData.expiryDate,
+        soilType: cropData.soilType,
+        pesticidesUsed: cropData.pesticidesUsed || 'Not specified',
+        imageUrl: cropData.imageUrl || '',
+        farmerLocation: cropData.location || ''
+      };
+
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(cropData)
+        body: JSON.stringify(backendData)
       });
 
       const result = await this.handleResponse(response);
@@ -136,7 +201,8 @@ class ApiService {
 
   async deleteCrop(cropId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/crops/${cropId}`, {
+      const endpoint = `${this.getCropEndpoint()}/${cropId}`;
+      const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: this.getAuthHeaders()
       });
@@ -149,7 +215,7 @@ class ApiService {
 
   async getCropsByFarmerId(farmerId: string): Promise<ApiResponse<any[]>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/crops/farmer/${farmerId}`, {
+      const response = await fetch(`${API_BASE_URL}/farmer/crops`, {
         headers: this.getAuthHeaders()
       });
 
@@ -161,7 +227,7 @@ class ApiService {
 
   async getCropsByDistributorId(distributorId: string): Promise<ApiResponse<any[]>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/crops/distributor/${distributorId}`, {
+      const response = await fetch(`${API_BASE_URL}/distributor/crops`, {
         headers: this.getAuthHeaders()
       });
 
@@ -180,8 +246,34 @@ class ApiService {
     }
   }
 
+  async deleteUser(userId: number): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      return { error: 'Network error occurred' };
+    }
+  }
+
+  async getAllUsers(): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      return { error: 'Network error occurred' };
+    }
+  }
+
   signOut(): void {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
   }
 }
 
