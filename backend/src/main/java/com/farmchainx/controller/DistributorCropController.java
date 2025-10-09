@@ -110,4 +110,14 @@ public class DistributorCropController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<DistributorCrop>> getAllDistributorCrops() {
+        try {
+            List<DistributorCrop> crops = distributorCropRepository.findAll();
+            return ResponseEntity.ok(crops);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

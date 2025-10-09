@@ -43,6 +43,26 @@ class ApiService {
     return `${API_BASE_URL}/${role}/crops`;
   }
 
+  private transformBackendCropToFrontend(backendCrop: any): any {
+    return {
+      id: String(backendCrop.id),
+      user_id: String(backendCrop.user?.id || ''),
+      name: backendCrop.name,
+      crop_type: backendCrop.cropType,
+      harvest_date: backendCrop.harvestDate,
+      expiry_date: backendCrop.expiryDate,
+      soil_type: backendCrop.soilType,
+      pesticides_used: backendCrop.pesticidesUsed,
+      image_url: backendCrop.imageUrl,
+      created_at: backendCrop.createdAt,
+      farmer_info: backendCrop.farmerLocation ? {
+        location: backendCrop.farmerLocation,
+        name: backendCrop.farmerName || backendCrop.user?.name || '',
+        farmer_id: backendCrop.farmerId || backendCrop.user?.farmerId || ''
+      } : undefined
+    };
+  }
+
   async signIn(email: string, password: string): Promise<ApiResponse<any>> {
     try {
       console.log('Attempting backend login for:', email);
@@ -122,7 +142,11 @@ class ApiService {
         headers: this.getAuthHeaders()
       });
 
-      return await this.handleResponse(response);
+      const result = await this.handleResponse(response);
+      if (result.data) {
+        result.data = result.data.map((crop: any) => this.transformBackendCropToFrontend(crop));
+      }
+      return result;
     } catch (error) {
       console.error('Get crops failed:', error);
       return { error: 'Network error occurred' };
@@ -163,6 +187,9 @@ class ApiService {
         console.error('Backend crop creation failed:', result.error);
       } else {
         console.log('Backend crop creation successful:', result.data);
+        if (result.data) {
+          result.data = this.transformBackendCropToFrontend(result.data);
+        }
       }
       return result;
     } catch (error) {
@@ -201,6 +228,9 @@ class ApiService {
         console.error('Backend crop update failed:', result.error);
       } else {
         console.log('Backend crop update successful:', result.data);
+        if (result.data) {
+          result.data = this.transformBackendCropToFrontend(result.data);
+        }
       }
       return result;
     } catch (error) {
@@ -223,13 +253,49 @@ class ApiService {
     }
   }
 
-  async getCropsByFarmerId(farmerId: string): Promise<ApiResponse<any[]>> {
+  async getAllFarmerCrops(): Promise<ApiResponse<any[]>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/farmer/crops`, {
+      const response = await fetch(`${API_BASE_URL}/farmer/crops/all`, {
         headers: this.getAuthHeaders()
       });
 
-      return await this.handleResponse(response);
+      const result = await this.handleResponse(response);
+      if (result.data) {
+        result.data = result.data.map((crop: any) => this.transformBackendCropToFrontend(crop));
+      }
+      return result;
+    } catch (error) {
+      return { error: 'Network error occurred' };
+    }
+  }
+
+  async getCropsByFarmerId(farmerId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/farmer/crops/by-farmer/${farmerId}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      const result = await this.handleResponse(response);
+      if (result.data) {
+        result.data = result.data.map((crop: any) => this.transformBackendCropToFrontend(crop));
+      }
+      return result;
+    } catch (error) {
+      return { error: 'Network error occurred' };
+    }
+  }
+
+  async getAllDistributorCrops(): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/distributor/crops/all`, {
+        headers: this.getAuthHeaders()
+      });
+
+      const result = await this.handleResponse(response);
+      if (result.data) {
+        result.data = result.data.map((crop: any) => this.transformBackendCropToFrontend(crop));
+      }
+      return result;
     } catch (error) {
       return { error: 'Network error occurred' };
     }
@@ -241,7 +307,11 @@ class ApiService {
         headers: this.getAuthHeaders()
       });
 
-      return await this.handleResponse(response);
+      const result = await this.handleResponse(response);
+      if (result.data) {
+        result.data = result.data.map((crop: any) => this.transformBackendCropToFrontend(crop));
+      }
+      return result;
     } catch (error) {
       return { error: 'Network error occurred' };
     }

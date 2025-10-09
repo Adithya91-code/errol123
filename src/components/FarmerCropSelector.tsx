@@ -4,6 +4,7 @@ import { Crop } from '../types';
 import { UserRole } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { storage } from '../lib/storage';
+import { apiService } from '../lib/api';
 
 interface FarmerCropSelectorProps {
   userRole: UserRole;
@@ -25,7 +26,7 @@ const FarmerCropSelector: React.FC<FarmerCropSelectorProps> = ({ userRole, onClo
   const supplierType = isDistributor ? 'farmer' : 'distributor';
   const supplierLabel = isDistributor ? 'Farmer' : 'Distributor';
 
-  const handleSupplierIdSearch = () => {
+  const handleSupplierIdSearch = async () => {
     if (!supplierId || supplierId.length !== 3) {
       setError(`Please enter a valid 3-digit ${supplierType} ID`);
       return;
@@ -34,38 +35,49 @@ const FarmerCropSelector: React.FC<FarmerCropSelectorProps> = ({ userRole, onClo
     setError('');
     setSupplierCrops([]);
     setSupplierInfo(null);
+    setLoading(true);
 
-    let supplier;
-    let crops;
+    try {
+      if (isDistributor) {
+        const response = await apiService.getCropsByFarmerId(supplierId);
+        console.log('API response for farmer crops:', response);
 
-    if (isDistributor) {
-      supplier = storage.getFarmerByFarmerId(supplierId);
-      console.log('Looking for farmer with ID:', supplierId);
-      console.log('Found farmer:', supplier);
-      crops = supplier ? storage.getCropsByFarmerId(supplierId) : [];
-      console.log('Found crops:', crops);
-    } else {
-      supplier = storage.getDistributorByDistributorId(supplierId);
-      console.log('Looking for distributor with ID:', supplierId);
-      console.log('Found distributor:', supplier);
-      crops = supplier ? storage.getCropsByDistributorId(supplierId) : [];
-      console.log('Found crops:', crops);
+        if (response.error) {
+          setError(`Error fetching farmer crops: ${response.error}`);
+          return;
+        }
+
+        if (!response.data || response.data.length === 0) {
+          setError(`${supplierLabel} with ID ${supplierId} has no crops available`);
+          return;
+        }
+
+        setSupplierCrops(response.data);
+        setSupplierInfo({ farmer_id: supplierId, name: response.data[0].farmer_info?.name || 'Farmer' });
+        setSelectedCrops([]);
+      } else {
+        const response = await apiService.getAllDistributorCrops();
+        console.log('API response for distributor crops:', response);
+
+        if (response.error) {
+          setError(`Error fetching distributor crops: ${response.error}`);
+          return;
+        }
+
+        if (!response.data || response.data.length === 0) {
+          setError(`No distributor crops available`);
+          return;
+        }
+
+        setSupplierCrops(response.data);
+        setSupplierInfo({ distributor_id: supplierId, name: 'Distributor' });
+        setSelectedCrops([]);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch crops');
+    } finally {
+      setLoading(false);
     }
-
-    if (!supplier) {
-      setError(`${supplierLabel} not found with this ID`);
-      return;
-    }
-
-    if (crops.length === 0) {
-      setError(`${supplierLabel} found but has no crops available`);
-      setSupplierInfo(supplier);
-      return;
-    }
-
-    setSupplierCrops(crops);
-    setSupplierInfo(supplier);
-    setSelectedCrops([]);
   };
 
   const handleCropSelection = (cropId: string) => {
@@ -86,65 +98,44 @@ const FarmerCropSelector: React.FC<FarmerCropSelectorProps> = ({ userRole, onClo
     setError('');
 
     try {
-      selectedCrops.forEach(cropId => {
+      for (const cropId of selectedCrops) {
         const originalCrop = supplierCrops.find(c => c.id === cropId);
         if (originalCrop && user) {
-          // Create a new crop entry for the current user
-          const newCrop: Crop = {
-            ...originalCrop,
-            id: Math.random().toString(36).substr(2, 9), // New ID for the copy
-            user_id: user.id, // Assign to current user
-            created_at: new Date().toISOString()
+          const cropData: any = {
+            name: originalCrop.name,
+            crop_type: originalCrop.crop_type,
+            harvest_date: originalCrop.harvest_date,
+            expiry_date: originalCrop.expiry_date,
+            soil_type: originalCrop.soil_type,
+            pesticides_used: originalCrop.pesticides_used,
+            image_url: originalCrop.image_url,
+            location: user.location || 'Location not specified'
           };
 
           if (isDistributor) {
-            // Distributor receiving from farmer
-            newCrop.farmer_info = {
-              farmer_id: supplierInfo.farmer_id,
-              name: supplierInfo.name || supplierInfo.email,
-              location: supplierInfo.location || 'Location not specified'
-            };
-            newCrop.distributor_info = {
-              distributor_id: user.distributor_id!,
-              name: user.name || user.email,
-              location: user.location || 'Location not specified',
-              received_date: new Date().toISOString().split('T')[0],
-              sent_to_retailer: '',
-              retailer_location: ''
-            };
+            cropData.farmerId = originalCrop.farmer_info?.farmer_id || supplierId;
+            cropData.farmerName = originalCrop.farmer_info?.name || 'Farmer';
+            cropData.farmerLocation = originalCrop.farmer_info?.location || 'Unknown';
+            cropData.distributorLocation = user.location || 'Unknown';
+            cropData.receivedDate = new Date().toISOString().split('T')[0];
           } else {
-            // Retailer receiving from distributor
-            newCrop.retailer_info = {
-              name: user.name || user.email,
-              location: user.location || 'Location not specified',
-              received_date: new Date().toISOString().split('T')[0],
-              received_from_distributor: supplierInfo.name || supplierInfo.email,
-              distributor_location: supplierInfo.location || 'Location not specified'
-            };
+            cropData.farmerId = originalCrop.farmer_info?.farmer_id;
+            cropData.farmerName = originalCrop.farmer_info?.name;
+            cropData.farmerLocation = originalCrop.farmer_info?.location;
+            cropData.receivedDate = new Date().toISOString().split('T')[0];
           }
 
-          storage.addCrop(newCrop);
-
-          // Add supply chain entry
-          storage.addSupplyChainEntry({
-            id: Math.random().toString(36).substr(2, 9),
-            crop_id: newCrop.id,
-            user_id: user.id,
-            user_role: user.role,
-            entry_date: new Date().toISOString(),
-            details: {
-              supplier_id: supplierId,
-              supplier_type: supplierType,
-              action: `received_from_${supplierType}`
-            }
-          });
+          const response = await apiService.createCrop(cropData);
+          if (response.error) {
+            throw new Error(response.error);
+          }
         }
-      });
+      }
 
       onSave();
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to add crops');
     } finally {
       setLoading(false);
     }

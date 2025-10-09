@@ -104,4 +104,27 @@ public class FarmerCropController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<FarmerCrop>> getAllFarmerCrops() {
+        try {
+            List<FarmerCrop> crops = farmerCropRepository.findAll();
+            return ResponseEntity.ok(crops);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/by-farmer/{farmerId}")
+    public ResponseEntity<List<FarmerCrop>> getCropsByFarmerId(@PathVariable String farmerId) {
+        try {
+            List<FarmerCrop> crops = farmerCropRepository.findAll()
+                .stream()
+                .filter(crop -> farmerId.equals(crop.getUser().getFarmerId()))
+                .toList();
+            return ResponseEntity.ok(crops);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }
